@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Ignite persistence capacity path</title>
+  <desc id="desc">A persistence capacity diagram showing updates entering RAM, WAL persistence, acknowledgement, and checkpointing to partition files.</desc>
+  <defs>
+    <style>
+      .t{font-family:Helvetica,Arial,sans-serif;fill:#3c3c3b}
+      .w{font-family:Helvetica,Arial,sans-serif;fill:#fff;font-weight:700}
+      .b{font-weight:700}
+    </style>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="12" markerHeight="12" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#ff6716"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="720" fill="#fff"/>
+  <rect x="70" y="50" width="1140" height="620" rx="14" fill="#fff" stroke="#dedcdc" stroke-width="5" stroke-dasharray="10 14"/>
+  <text x="640" y="115" text-anchor="middle" class="t b" font-size="34">Server Node</text>
+
+  <rect x="325" y="190" width="180" height="390" rx="10" fill="#de0e06"/>
+  <text x="418" y="405" text-anchor="middle" class="w" font-size="48" transform="rotate(-90 418 405)">RAM</text>
+  <rect x="355" y="250" width="120" height="260" rx="10" fill="#ff6868" stroke="#fff" stroke-width="4"/>
+  <text x="415" y="345" text-anchor="middle" class="w" font-size="23">data regions</text>
+  <text x="415" y="378" text-anchor="middle" class="w" font-size="23">checkpoint</text>
+  <text x="415" y="411" text-anchor="middle" class="w" font-size="23">buffers</text>
+
+  <text x="135" y="272" class="t" font-size="28">1. Update</text>
+  <path d="M145 310 H315" fill="none" stroke="#ff6716" stroke-width="5" marker-end="url(#arrow)"/>
+  <text x="155" y="477" class="t" font-size="28">3. Ack</text>
+  <path d="M315 475 H145" fill="none" stroke="#ff6716" stroke-width="5" marker-end="url(#arrow)"/>
+
+  <text x="515" y="277" class="t" font-size="28">2. Persist to WAL</text>
+  <path d="M510 295 H760" fill="none" stroke="#ff6716" stroke-width="5" marker-end="url(#arrow)"/>
+  <rect x="785" y="230" width="300" height="85" rx="10" fill="#2f80c0"/>
+  <text x="935" y="285" text-anchor="middle" class="w" font-size="30">Write-Ahead Log</text>
+
+  <text x="515" y="462" class="t" font-size="28">4. Checkpoint to partition files</text>
+  <path d="M510 475 H760" fill="none" stroke="#ff6716" stroke-width="5" marker-end="url(#arrow)"/>
+  <rect x="785" y="390" width="300" height="85" rx="10" fill="#80aac8"/>
+  <text x="935" y="445" text-anchor="middle" class="w" font-size="30">Partition File 1</text>
+  <rect x="785" y="515" width="300" height="85" rx="10" fill="#80aac8"/>
+  <text x="935" y="570" text-anchor="middle" class="w" font-size="30">Partition File N</text>
+
+  <rect x="245" y="610" width="790" height="42" rx="8" fill="#eeeded"/>
+  <text x="640" y="638" text-anchor="middle" class="t b" font-size="23">Persistence nodes need memory capacity and disk/page-cache capacity.</text>
+</svg>

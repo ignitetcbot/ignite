@@ -17,6 +17,8 @@
 This page describes the full memory budget of a production Ignite server node.
 Ignite stores cache data and indexes in off-heap page memory, but the Java heap, JVM native memory, direct buffers, operating system page cache, and other processes on the host are still part of the sizing exercise.
 
+
+// todo update style
 image::images/memory-budget-node.svg[Ignite node memory budget]
 
 [IMPORTANT]
@@ -54,6 +56,25 @@ The process resident set can be much larger than `-Xmx` because it also includes
 | Monitoring agents, log collectors, backup tools, security agents or scanners, antivirus, sidecars, direct I/O helpers, shell sessions, and orchestration daemons. Their peak memory usage must be reserved outside the Ignite JVM budget.
 |===
 
+== Capacity Planning
+
+Plan memory and disk capacity together.
+For persistent nodes, WAL, partition files, snapshots, and the OS page cache are part of the same production budget as heap, page memory, checkpoint buffers, and JVM native memory.
+
+image::images/memory-budget-capacity-process.svg[Ignite memory and disk capacity budget]
+
+With persistence enabled, a write first changes pages in memory and is persisted to the WAL.
+Later, checkpointing writes dirty pages from memory to partition files.
+This means that write-heavy workloads need enough data region memory, checkpoint buffer space, WAL capacity, partition-file capacity, and OS page cache headroom.
+
+image::images/memory-budget-capacity-persistence.svg[Ignite persistence capacity path]
+
+Capacity limits fail in different ways.
+Heap, direct memory, metaspace, and thread-stack pressure usually surfaces as `OutOfMemoryError`.
+Data region and checkpoint-buffer pressure usually surfaces as `IgniteOutOfMemoryException`.
+
+image::images/memory-budget-capacity-oome.svg[Ignite memory capacity failure modes]
+
 == Why Heap Is Still Needed
 
 Data and indexes are stored off-heap, but operations still create heap objects.
@@ -69,6 +90,7 @@ Conversely, a node can have low heap usage and still fail with `IgniteOutOfMemor
 
 For each server node, size every data region explicitly:
 
+// todo update style
 image::images/memory-budget-data-region.svg[Ignite data region memory consumers]
 
 * Include primary and backup entries owned by the node.
