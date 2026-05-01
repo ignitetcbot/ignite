@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
-  <title id="title">Ignite capacity limit failures</title>
-  <desc id="desc">A diagram showing that JVM memory capacity limits usually produce OutOfMemoryError while Ignite page memory limits usually produce IgniteOutOfMemoryException.</desc>
+  <title id="title">Ignite capacity limit outcomes</title>
+  <desc id="desc">A diagram showing JVM memory failure separately from page-memory pressure, where page memory can either use disk-backed page replacement or fail.</desc>
   <defs>
     <style>
       .t{font-family:Helvetica,Arial,sans-serif;fill:#3c3c3b}
@@ -29,13 +29,14 @@
   <text x="940" y="205" text-anchor="middle" class="t b" font-size="28">Ignite page memory limit</text>
   <rect x="765" y="255" width="350" height="70" rx="10" fill="#de0e06"/>
   <text x="940" y="299" text-anchor="middle" class="w" font-size="24">data region / checkpoint buffer</text>
-  <path d="M940 330 V380" fill="none" stroke="#ff6716" stroke-width="5" marker-end="url(#arrow)"/>
-  <rect x="765" y="390" width="350" height="70" rx="10" fill="#ff6868" stroke="#de0e06" stroke-width="4"/>
-  <text x="940" y="434" text-anchor="middle" class="w" font-size="24">IgniteOutOfMemoryException</text>
-  <path d="M940 460 V492" fill="none" stroke="#ff6716" stroke-width="5" marker-end="url(#arrow)"/>
-  <rect x="755" y="500" width="370" height="65" rx="10" fill="#2f80c0"/>
-  <text x="940" y="526" text-anchor="middle" class="w" font-size="21">with persistence: disk + OS page cache</text>
-  <text x="940" y="553" text-anchor="middle" class="w" font-size="21">affect replacement and checkpointing</text>
+  <path d="M940 330 V365" fill="none" stroke="#ff6716" stroke-width="5" marker-end="url(#arrow)"/>
+  <rect x="765" y="375" width="350" height="82" rx="10" fill="#2f80c0"/>
+  <text x="940" y="408" text-anchor="middle" class="w" font-size="23">Alternative 1:</text>
+  <text x="940" y="438" text-anchor="middle" class="w" font-size="23">page replacement to disk</text>
+  <path d="M940 460 V490" fill="none" stroke="#ff6716" stroke-width="5" marker-end="url(#arrow)"/>
+  <rect x="765" y="500" width="350" height="78" rx="10" fill="#ff6868" stroke="#de0e06" stroke-width="4"/>
+  <text x="940" y="532" text-anchor="middle" class="w" font-size="23">Alternative 2:</text>
+  <text x="940" y="562" text-anchor="middle" class="w" font-size="23">operation or node failure</text>
 
   <text x="640" y="652" text-anchor="middle" class="t" font-size="23">Heap-only monitoring misses Ignite page memory, direct buffers, OS page cache, and disk pressure.</text>
 </svg>
