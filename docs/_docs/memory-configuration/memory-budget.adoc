@@ -56,9 +56,13 @@ The process resident set can be much larger than `-Xmx` because it also includes
 
 == Capacity Planning
 
-Plan memory and disk capacity together.
-For persistent nodes, WAL, partition files, snapshots, and the OS page cache are part of the same production budget as heap, page memory, checkpoint buffers, and JVM native memory.
-Write-heavy persistent workloads need enough data region memory, checkpoint buffer space, WAL capacity, partition-file capacity, and OS page cache headroom.
+Plan memory before tuning persistence storage.
+This page focuses on memory inside and around an Ignite server node: Java heap, off-heap page memory, direct and native memory, OS page cache reserve, and other host processes.
+For WAL, partition files, snapshots, page replacement, and disk/IOPS sizing, see link:persistence/storage-budget[Persistence Storage Budget].
+
+For a new deployment, prefer measurement over guessing.
+Start a test node with production-like cache, data region, persistence, SQL, and JVM settings; load a representative data sample; run the expected read, write, SQL, rebalance, and maintenance operations; then record heap, process RSS, data region metrics, checkpoint buffer usage, direct/native memory, OS page cache pressure, and other host processes.
+Use analytical estimates only as an initial budget or as a cross-check for measured results.
 
 == Why Heap Is Still Needed
 
@@ -87,22 +91,6 @@ For a new workload, load a representative data sample and monitor data region me
 Then extrapolate from real data rather than from source file size.
 Make sure the sample represents key and value sizes, string lengths, indexed fields, partition distribution, backups, and update patterns.
 
-== Persistence, WAL, and Checkpoints
-
-With native persistence enabled, memory is no longer only a cache of Java objects.
-Ignite keeps pages in data regions, writes updates to the WAL, and periodically checkpoints dirty pages to partition files.
-Budget for:
-
-* Data region `maxSize` for hot pages, indexes, and page metadata.
-* Checkpoint page buffers for each persistent data region.
-* WAL buffers or WAL memory mappings. The default WAL segment size is 64 MB, and direct memory guidance in the JVM tuning page recommends at least `walSegmentSize * 4` if `-XX:MaxDirectMemorySize` is set.
-* OS page cache for partition files, WAL, WAL archive, logs, and snapshots.
-* Extra temporary memory during snapshots, defragmentation, WAL iteration, CDC, idle verify, page lock tracking, index rebuild, and backups.
-
-If persistence is disabled and eviction is not enabled, all cache data must fit into configured data regions.
-If a region reaches its limit, cache operations can fail.
-If persistence is enabled, page replacement can move cold pages out of RAM, but too little RAM or OS page cache can still cause page faults, long checkpoints, throttling, and latency spikes.
-
 == Host Sizing Checklist
 
 Use this checklist per physical host or container:
@@ -110,12 +98,9 @@ Use this checklist per physical host or container:
 * Total RAM available to the node after container or cgroup limits.
 * Sum of all Ignite data region `maxSize` values, including the default and system regions.
 * Java heap size, with enough headroom for SQL result sets, transactions, cache batches, compute/services, application code, near/on-heap caches, operational tasks, and any link:SQL/sql-calcite#memory-quotas[Calcite SQL memory quotas].
-* Persistence mode for each region.
-* Checkpoint page buffers for persistent regions.
 * Direct memory for WAL, communication, clients, SSL, page-store I/O, snapshots, defragmentation, page lock tracking, and performance statistics.
 * JVM native memory: metaspace, code cache, thread stacks, JIT, GC, JNI, and native libraries.
-* OS page cache reserve. For persistent nodes, do not give all RAM to the JVM and data regions; the OS needs memory to cache and flush Ignite files.
-* WAL, WAL archive, snapshot, log, and work-directory disk usage. Disk pressure often becomes memory pressure through page cache and stalled I/O.
+* OS page cache reserve, especially when native persistence is enabled.
 * Monitoring, security, backup, logging, and sidecar overhead.
 * Emergency reserve for spikes, rolling upgrades, topology changes, rebalancing, index rebuilds, failover, and incident diagnostics such as heap dumps or Flight Recorder.
 
@@ -135,7 +120,7 @@ Host RAM >=
 ----
 
 For in-memory deployments, the memory tuning guide recommends not allocating more than 90% of host RAM to Ignite nodes.
-For persistent deployments, it recommends not allocating more than 70% of host RAM to Ignite when the OS page cache is enabled.
+For persistent deployments, leave additional RAM for the OS page cache and review link:persistence/storage-budget[Persistence Storage Budget].
 Treat these values as starting points and validate them with production-like load, checkpoints, rebalancing, failover, and monitoring agents enabled.
 
 == Monitoring
@@ -148,8 +133,7 @@ Watch at least:
 * Process RSS or container memory usage from the operating system.
 * Java heap and non-heap metrics.
 * Data region metrics: `PhysicalMemorySize`, `TotalAllocatedSize`, `TotalUsedPages`, `PagesFillFactor`, `OffHeapSize`, `OffheapUsedSize`, `UsedCheckpointBufferSize`, and eviction or replacement rates.
-* Checkpoint metrics: dirty pages, checkpoint duration, checkpoint buffer size, copied-on-write pages, throttling time, and page write duration.
-* WAL metrics, WAL archive size, and disk free space.
+* For persistent nodes: checkpoint, WAL, archive, and disk metrics described in link:persistence/storage-budget[Persistence Storage Budget].
 * SQL query concurrency, result page size, slow queries, and large result sets.
 * GC logs, heap dumps, and JVM native memory if native memory tracking is enabled.
 
@@ -185,6 +169,7 @@ The remediation is different: increase or tune heap/direct/native JVM memory for
 * link:memory-configuration/eviction-policies[Eviction Policies]
 * link:memory-configuration/replacement-policies[Replacement Policies]
 * link:persistence/native-persistence[Ignite Persistence]
+* link:persistence/storage-budget[Persistence Storage Budget]
 * link:persistence/persistence-tuning[Tuning Persistence]
 * link:SQL/sql-tuning[SQL Tuning]
 * link:SQL/sql-calcite#memory-quotas[Calcite SQL Memory Quotas]

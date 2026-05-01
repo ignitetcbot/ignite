@@ -139,6 +139,8 @@
   items:
     - title: Ignite Persistence
       url: persistence/native-persistence
+    - title: Persistence Storage Budget
+      url: persistence/storage-budget
     - title: External Storage
       url: persistence/external-storage
     - title: Swapping
