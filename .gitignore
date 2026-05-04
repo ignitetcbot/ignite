@@ -96,4 +96,4 @@ modules/ducktests/tests/ignitetest.egg-info/**
 modules/ducktests/tests/build/**
 modules/ducktests/tests/dist/**
 /.gigaide/gigaide.properties
-/docs/elements/.$memory-budget.drawio.bkp
+*.bkp
