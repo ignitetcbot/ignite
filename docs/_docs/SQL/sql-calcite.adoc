@@ -123,7 +123,7 @@ QUERY_ENGINE=CALCITE
 
 == Memory Quotas [[memory-quotas]]
 
-The Calcite-based SQL engine can track and limit heap memory used by query execution.
+The Calcite-based SQL engine can track and limit heap memory accounted by Calcite query execution operators.
 This is useful for protecting a server node from a single large query or from many concurrent memory-heavy queries.
 
 Two quotas can be configured in `CalciteQueryEngineConfiguration`:
@@ -132,11 +132,14 @@ Two quotas can be configured in `CalciteQueryEngineConfiguration`:
 * `queryMemoryQuota` - a per-node heap memory quota for each Calcite SQL query running on the node.
 
 Both quotas are disabled by default (`0`).
+The quota values are specified in bytes.
 If a quota is exceeded, the query fails with an `IgniteSQLException`.
 The global quota error message contains `Global memory quota for SQL queries exceeded`, and the per-query quota error message contains `Query quota exceeded`.
 
 The quota is applied to query execution structures that keep rows in heap memory, for example sorting, hash joins, hash aggregates, set operations, collection operations, spools, and result materialization.
 It is not a process memory limit and it does not account for Ignite data regions, direct memory, JVM native memory, or the operating system page cache.
+The quotas are per-node.
+For a distributed query, total memory consumption across the cluster can be higher because the limit is applied independently on every participating node.
 Size these quotas together with `-Xmx` and the expected SQL concurrency.
 
 [tabs]
