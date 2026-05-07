@@ -126,14 +126,14 @@ QUERY_ENGINE=CALCITE
 The Calcite-based SQL engine can track and limit heap memory accounted by Calcite query execution operators.
 This is useful for protecting a server node from a single large query or from many concurrent memory-heavy queries.
 
-Two quotas can be configured in `CalciteQueryEngineConfiguration`:
+Two types of quotas can be configured in `CalciteQueryEngineConfiguration`:
 
 * `globalMemoryQuota` - a per-node heap memory quota for all Calcite SQL queries running on the node.
 * `queryMemoryQuota` - a per-node heap memory quota for each Calcite SQL query running on the node.
 
 Both quotas are disabled by default (`0`).
 The quota values are specified in bytes.
-If a quota is exceeded, the query fails with an `IgniteSQLException`.
+If a quota is exceeded, the query fails with an exception.
 The global quota error message contains `Global memory quota for SQL queries exceeded`, and the per-query quota error message contains `Query quota exceeded`.
 
 The quota is applied to query execution structures that keep rows in heap memory, for example sorting, hash joins, hash aggregates, set operations, collection operations, spools, and result materialization.
