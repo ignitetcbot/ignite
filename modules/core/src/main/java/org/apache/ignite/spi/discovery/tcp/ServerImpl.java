@@ -78,6 +78,7 @@ import org.apache.ignite.internal.IgniteInterruptedCheckedException;
 import org.apache.ignite.internal.IgniteNodeAttributes;
 import org.apache.ignite.internal.IgnitionEx;
 import org.apache.ignite.internal.events.DiscoveryCustomEvent;
+import org.apache.ignite.internal.managers.communication.UnknownMessageException;
 import org.apache.ignite.internal.managers.discovery.DiscoveryServerOnlyCustomMessage;
 import org.apache.ignite.internal.processors.configuration.distributed.DistributedBooleanProperty;
 import org.apache.ignite.internal.processors.failure.FailureProcessor;
@@ -1488,7 +1489,7 @@ class ServerImpl extends TcpDiscoveryImpl {
                 // Handshake.
                 spi.writeMessage(ses, req, timeoutHelper.nextTimeoutChunk(spi.getSocketTimeout()));
 
-                TcpDiscoveryHandshakeResponse res = spi.readMessage(ses, timeoutHelper.nextTimeoutChunk(ackTimeout0));
+                TcpDiscoveryHandshakeResponse res = spi.readHandshakeResponse(ses, timeoutHelper.nextTimeoutChunk(ackTimeout0));
 
                 if (msg instanceof TcpDiscoveryJoinRequestMessage) {
                     boolean ignore = false;
@@ -3462,7 +3463,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                                         timeoutHelper.nextTimeoutChunk(ackTimeout0));
                                 }
 
-                                TcpDiscoveryHandshakeResponse res = spi.readMessage(ses, timeoutHelper.nextTimeoutChunk(ackTimeout0));
+                                TcpDiscoveryHandshakeResponse res =
+                                    spi.readHandshakeResponse(ses, timeoutHelper.nextTimeoutChunk(ackTimeout0));
 
                                 if (log.isDebugEnabled())
                                     log.debug("Handshake response: " + res);
@@ -6639,16 +6641,16 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                     if (!Arrays.equals(buf, U.IGNITE_HEADER)) {
                         if (log.isDebugEnabled())
-                            log.debug("Unknown connection detected (is some other software connecting to " +
-                                "this Ignite port, or is this an incompatible Ignite node?" +
-                                (!spi.isSslEnabled() ? " missed SSL configuration?" : "" ) +
+                            log.debug("Unknown connection detected (possible reasons: an incompatible Ignite node or " +
+                                "other software connecting to this Ignite port" +
+                                (!spi.isSslEnabled() ? ", or missing SSL configuration on remote node" : "") +
                                 ") [rmtAddr=" + rmtAddr +
                                 ", locAddr=" + sock.getLocalSocketAddress() +
                                 ", rcvdHdr=" + U.byteArray2HexString(buf) + ']');
 
-                        LT.warn(log, "Unknown connection detected (is some other software connecting to " +
-                            "this Ignite port, or is this an incompatible Ignite node?" +
-                            (!spi.isSslEnabled() ? " missing SSL configuration on remote node?" : "" ) +
+                        LT.warn(log, "Unknown connection detected (possible reasons: an incompatible Ignite node or " +
+                            "other software connecting to this Ignite port" +
+                            (!spi.isSslEnabled() ? ", or missing SSL configuration on remote node" : "") +
                             ") [rmtAddr=" + sock.getInetAddress() + ", rcvdHdr=" + U.byteArray2HexString(buf) + ']', true);
 
                         return;
@@ -7185,8 +7187,10 @@ class ServerImpl extends TcpDiscoveryImpl {
                                 ", err=" + X.cause(e, ClassNotFoundException.class).getMessage() + ']');
 
                         // Always report marshalling errors.
-                        boolean err = e.hasCause(ObjectStreamException.class) ||
-                            (nodeAlive(nodeId) && spiStateCopy() == CONNECTED && !X.hasCause(e, IOException.class));
+                        // Can receive unknown message on handshake. It's ok - must continue to try find proper port.
+                        boolean err = e.hasCause(ObjectStreamException.class)
+                            || e.hasCause(UnknownMessageException.class)
+                            || (nodeAlive(nodeId) && spiStateCopy() == CONNECTED && !X.hasCause(e, IOException.class));
 
                         if (err)
                             LT.error(log, e, "Failed to read message [sock=" + sock + ", locNodeId=" + locNodeId +
@@ -7218,6 +7222,13 @@ class ServerImpl extends TcpDiscoveryImpl {
                     finally {
                         SecurityUtils.restoreDefaultSerializeVersion();
                     }
+                }
+            }
+            catch (UnknownMessageException e) {
+                if (spi.ignite() instanceof IgniteEx) {
+                    FailureProcessor failure = ((IgniteEx)spi.ignite()).context().failure();
+
+                    failure.process(new FailureContext(SYSTEM_WORKER_TERMINATION, e));
                 }
             }
             finally {
