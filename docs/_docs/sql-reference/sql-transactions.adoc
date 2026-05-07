@@ -1,0 +1,103 @@
+// Licensed to the Apache Software Foundation (ASF) under one or more
+// contributor license agreements.  See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership.
+// The ASF licenses this file to You under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with
+// the License.  You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+= SQL Transactions
+
+Ignite can run SQL queries inside an active transaction. Transactional SQL reads see uncommitted changes made by the current transaction, including changes made through SQL, Java API, or thin client cache API.
+
+== Enabling
+
+Transaction-aware SQL is disabled by default. Enable it on every cluster node and use the Calcite-based SQL engine:
+
+[source,java]
+----
+IgniteConfiguration cfg = new IgniteConfiguration();
+
+cfg.getTransactionConfiguration().setTxAwareQueriesEnabled(true);
+cfg.getSqlConfiguration().setQueryEnginesConfiguration(new CalciteQueryEngineConfiguration());
+----
+
+All nodes in the cluster must have the same `txAwareQueriesEnabled` value.
+
+SQL tables used in transactions must be created on `TRANSACTIONAL` caches. For `CREATE TABLE`, use `WITH "atomicity=transactional"`.
+
+== Java API
+
+Use ordinary Ignite transactions and execute `SqlFieldsQuery` inside them:
+
+[source,java]
+----
+try (Transaction tx = ignite.transactions().txStart(PESSIMISTIC, READ_COMMITTED)) {
+    cache.query(new SqlFieldsQuery("INSERT INTO Person(id, name) VALUES(?, ?)")
+        .setArgs(1, "John")).getAll();
+
+    List<List<?>> rows = cache.query(new SqlFieldsQuery(
+        "SELECT name FROM Person WHERE id = ?").setArgs(1)).getAll();
+
+    tx.commit();
+}
+----
+
+== Java Thin Client
+
+The Java thin client supports the same behavior through `ClientTransactions`:
+
+[source,java]
+----
+try (ClientTransaction tx = client.transactions().txStart(PESSIMISTIC, READ_COMMITTED)) {
+    client.query(new SqlFieldsQuery("INSERT INTO Person(id, name) VALUES(?, ?)")
+        .setArgs(1, "John")).getAll();
+
+    client.query(new SqlFieldsQuery("SELECT name FROM Person WHERE id = ?")
+        .setArgs(1)).getAll();
+
+    tx.commit();
+}
+----
+
+== Thin JDBC
+
+Thin JDBC starts a server-side transaction when `autoCommit` is disabled and the first query is executed:
+
+[source,java]
+----
+try (Connection conn = DriverManager.getConnection(
+        "jdbc:ignite:thin://127.0.0.1?transactionConcurrency=PESSIMISTIC")) {
+    conn.setAutoCommit(false);
+
+    try (PreparedStatement stmt = conn.prepareStatement(
+            "INSERT INTO Person(id, name) VALUES(?, ?)")) {
+        stmt.setInt(1, 1);
+        stmt.setString(2, "John");
+        stmt.executeUpdate();
+    }
+
+    conn.commit();
+}
+----
+
+Supported JDBC transaction parameters:
+
+* `transactionConcurrency`: `OPTIMISTIC` or `PESSIMISTIC`; default is `OPTIMISTIC`.
+* `transactionTimeout`: timeout in milliseconds; `0` means no timeout.
+* `transactionLabel`: transaction label.
+
+== Limitations
+
+* Supported isolation level: `READ_COMMITTED` only.
+* Supported SQL engine: Calcite only. The H2-based indexing engine does not support SQL inside transactions.
+* DDL transactions are not supported.
+* SQL `BEGIN`, `COMMIT`, and `ROLLBACK` statements do not manage these transactions. Use the transaction API or JDBC `commit()`/`rollback()`.
+* JDBC result sets are closed on commit or rollback; `HOLD_CURSORS_OVER_COMMIT` is not supported.
+* JDBC savepoints are not supported. SQL savepoint commands are described in link:sql-reference/transactions[Transactions].

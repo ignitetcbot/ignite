@@ -232,8 +232,10 @@
       url: sql-reference/ddl
     - title: Data Manipulation Language (DML)
       url: sql-reference/dml
-    - title: Transactions
-      url: key-value-api/transactions
+    - title: SQL Transactions
+      url: sql-reference/sql-transactions
+    - title: Transaction Commands
+      url: sql-reference/transactions
     - title: Operational Commands
       url: sql-reference/operational-commands
     - title: Aggregate functions
