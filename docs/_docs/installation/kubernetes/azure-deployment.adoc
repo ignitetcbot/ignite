@@ -14,18 +14,8 @@
 // limitations under the License.
 = Microsoft Azure Kubernetes Service Deployment
 
-:serviceName: AKS
-:soft_name: Kubernetes
-:command: kubectl
-:configDir: ../../code-snippets/k8s
-:script: ../../code-snippets/k8s/setup.sh
-:javaFile: ../../{javaCodeDir}/k8s/K8s.java
-
-This page is a step-by-step guide on how to deploy an Ignite  cluster on Microsoft Azure Kubernetes Service.
-
-include::installation/kubernetes/generic-configuration.adoc[tag=intro]
-
-include::installation/kubernetes/generic-configuration.adoc[tag=kube-version]
+This page explains how to create a Microsoft Azure Kubernetes Service cluster for an Ignite deployment.
+After the Kubernetes cluster is ready, deploy Ignite using Kubernetes manifests, Helm charts, or an operator that matches your environment.
 
 == Creating the AKS Cluster
 
@@ -76,9 +66,13 @@ aks-agentpool-25545244-vmss000001   Ready    agent   6h23m   v1.14.8
 aks-agentpool-25545244-vmss000002   Ready    agent   6h23m   v1.14.8
 ----
 
-Now you can start creating Kubernetes resources.
+Now you can deploy Ignite to the Kubernetes cluster.
 
 == Kubernetes Configuration
 
-include::installation/kubernetes/generic-configuration.adoc[tag=kubernetes-config]
+Configure Ignite node discovery to use `TcpDiscoveryKubernetesIpFinder`.
+The IP finder connects to the Kubernetes API and obtains the addresses of the Ignite pods from a Kubernetes service.
+Set the IP finder's `namespace` and `serviceName` properties to the namespace and service used by the Ignite pods.
+
+For stateful Ignite deployments, configure persistent volumes and mount them to the directories used by Ignite for the work directory, WAL, and WAL archive.
 

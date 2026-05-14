@@ -14,19 +14,8 @@
 // limitations under the License.
 = Google Kubernetes Engine Deployment
 
-:serviceName: GKE
-:soft_name: Kubernetes
-:command: kubectl
-:configDir: ../../code-snippets/k8s
-:script: ../../code-snippets/k8s/setup.sh
-:javaFile: ../../{javaCodeDir}/k8s/K8s.java
-
-
-This page explains how to deploy an Ignite  cluster on Google Kubernetes Engine.
-
-include::installation/kubernetes/generic-configuration.adoc[tag=intro]
-
-include::installation/kubernetes/generic-configuration.adoc[tag=kube-version]
+This page explains how to create a Google Kubernetes Engine cluster for an Ignite deployment.
+After the Kubernetes cluster is ready, deploy Ignite using Kubernetes manifests, Helm charts, or an operator that matches your environment.
 
 == Creating a GKE Cluster
 A cluster in GKE is a set of nodes that provision resources for the applications that are deployed in the cluster.
@@ -67,12 +56,14 @@ gke-my-cluster-default-pool-e93974f2-jqj3   Ready    <none>   72s   v1.14.10-gke
 gke-my-cluster-default-pool-e93974f2-v8xv   Ready    <none>   74s   v1.14.10-gke.27
 ----
 
-Now you are ready to create Kubernetes resources.
+Now you are ready to deploy Ignite to the Kubernetes cluster.
 
 == Kubernetes Configuration
 
-include::installation/kubernetes/generic-configuration.adoc[tag=kubernetes-config]
+Configure Ignite node discovery to use `TcpDiscoveryKubernetesIpFinder`.
+The IP finder connects to the Kubernetes API and obtains the addresses of the Ignite pods from a Kubernetes service.
+Set the IP finder's `namespace` and `serviceName` properties to the namespace and service used by the Ignite pods.
 
-
+For stateful Ignite deployments, configure persistent volumes and mount them to the directories used by Ignite for the work directory, WAL, and WAL archive.
 
 
