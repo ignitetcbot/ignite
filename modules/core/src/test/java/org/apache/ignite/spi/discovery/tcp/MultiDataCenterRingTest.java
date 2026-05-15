@@ -118,7 +118,16 @@ public class MultiDataCenterRingTest extends GridCommonAbstractTest {
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
 
         for (int i = 0; i < cnt; i++) {
-            System.setProperty(IgniteSystemProperties.IGNITE_DATA_CENTER_ID, rnd.nextBoolean() ? DC_ID_0 : DC_ID_1);
+            String dcId;
+
+            if (i == 1)
+                dcId = DC_ID_0;
+            else if (i == 2)
+                dcId = DC_ID_1;
+            else
+                dcId = rnd.nextBoolean() ? DC_ID_0 : DC_ID_1;
+
+            System.setProperty(IgniteSystemProperties.IGNITE_DATA_CENTER_ID, dcId);
 
             startGrid(i);
         }
